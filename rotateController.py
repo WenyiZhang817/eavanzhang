@@ -333,7 +333,7 @@ class RotateController:
             step_couter = 0 if step_couter >= SEQ_LEN else step_couter
             time.sleep(INTERVAL)
 
-    def shoot_pulse():
+    def shoot_pulse(self):
         """
         脉冲发射
         """
