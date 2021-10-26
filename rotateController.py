@@ -15,7 +15,7 @@ UNIT_SUFFIX = "mm"  # 坐标系长度单位
 # 引脚定义：A、B、C、D
 ROTATE_PINS_LR = [17, 22, 13, 12]  # 左右方向键控制
 ROTATE_PINS_UD = [18, 19, 20, 21]  # 上下方向键控制
-ROTATE_PINS_TF = []  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
+ROTATE_PINS_TF = [6, 5, 4, 23]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
 REACTION_GENERATOR_PINS = [27]  # 发生器脉冲控制
 
 """
