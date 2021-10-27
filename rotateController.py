@@ -1,6 +1,12 @@
 import pygame
 import time
+import logging
+
+log_format = "%(levelname)s | %(asctime)-15s | %(message)s"
+logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPi.GPIO as GPIO
+
+logger = logging.getLogger(name="GPIO")
 
 
 """
@@ -12,6 +18,7 @@ ROTATE_CYCLE_LR_UD = 100  # 位移台，移动单位距离需要的脉冲循环�
 ROTATE_CYCLE_TF = 10  # 变压器，移动单位距离需要的脉冲循环次数
 UNIT = 0.1  # 坐标系单位长度
 UNIT_SUFFIX = "mm"  # 坐标系长度单位
+
 # 引脚定义：A、B、C、D
 ROTATE_PINS_LR = [17, 22, 13, 12]  # 左右方向键控制
 ROTATE_PINS_UD = [18, 19, 20, 21]  # 上下方向键控制
@@ -72,6 +79,7 @@ class RotateController:
             self.screen, WIHTE_COLOR, (int(self.width / 2), int(self.height / 2)), 3
         )
         self.point = (0, 0)
+        self.pin_detect_result = {}
         self.init_pins()
 
     def init_pins(self):
@@ -79,22 +87,45 @@ class RotateController:
         初始化引脚电平状态
         """
         GPIO.setmode(GPIO.BCM)
-        for pin in ROTATE_PINS_LR:
-            print("Setup ROTATE_PINS_LR")
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, False)
-        for pin in ROTATE_PINS_UD:
-            print("Setup ROTATE_PINS_UD")
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, False)
-        for pin in ROTATE_PINS_TF:
-            print("Setup ROTATE_PINS_TF")
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, False)
-        for pin in REACTION_GENERATOR_PINS:
-            print("Setup REACTION_GENERATOR_PINS")
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, False)
+        for pins in (
+            ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
+        ):
+            for pin in pins:
+                logger.info("Setup pin_%s" % pin)
+                GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+                GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
+                # 初始化 pin 检测结果
+                self.pin_detect_result[pin] = False
+
+    def detect_all_pins(self):
+        """
+        检测所有 pin 口能否正常输出到高电平
+        """
+        for pins in (
+            ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
+        ):
+            for pin in pins:
+                logger.warning("Detecting pin_%s" % pin)
+                GPIO.output(pin, GPIO.HIGH)
+                GPIO.output(pin, GPIO.LOW)
+                GPIO.remove_event_detect(pin)
+
+        not_pass_pins = [
+            pin
+            for pin in self.pin_detect_result.keys()
+            if not self.pin_detect_result[pin]
+        ]
+        if len(not_pass_pins) > 0:
+            logger.error(
+                "Pins detecting found error, %s init failed !!!" % not_pass_pins
+            )
+        else:
+            logger.info("All pins detect pass, init succeed !!!")
+
+    def rising_callback(self, pin):
+        if not self.init_detect_finish:
+            logger.info("Pin_%s is rising, detect succeed" % pin)
+            self.pin_detect_result[pin] = True
 
     def reset_screen(self):
         """
@@ -323,13 +354,8 @@ class RotateController:
 
         cycle_couter = 0
         step_couter = 0
-        while cycle_couter <= ROTATE_CYCLE:
-            for pin in range(0, 4):
-                xpin = rotate_pins[pin]
-                if seq[step_couter][pin] != 0:
-                    GPIO.output(xpin, True)
-                else:
-                    GPIO.output(xpin, False)
+        while cycle_couter <= rotate_cycle:
+            GPIO.output(rotate_pins, tuple(seq[step_couter]))
 
             cycle_couter += 1
             step_couter += 1
@@ -371,5 +397,6 @@ if __name__ == "__main__":
                     rotate_controller.shoot_pulse()
                 elif event.key == pygame.K_ESCAPE:
                     pygame.quit()
+                    GPIO.cleanup()
                     exit(0)
         pygame.display.flip()
