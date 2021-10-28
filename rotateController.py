@@ -79,52 +79,62 @@ class RotateController:
             self.screen, WIHTE_COLOR, (int(self.width / 2), int(self.height / 2)), 3
         )
         self.point = (0, 0)
-        self.pin_detect_result = {}
+        self.pin_init_result = {}
         self.init_pins()
+        self.detect_all_pins()
 
     def init_pins(self):
         """
         初始化引脚电平状态
         """
         GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
         for pin in (
             ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
         ):
             logger.info("Setup pin_%s" % pin)
             GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
-            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
+            # GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
             # 初始化 pin 检测结果
-            self.pin_detect_result[pin] = False
+            self.pin_init_result[pin] = GPIO.OUT
 
     def detect_all_pins(self):
         """
-        检测所有 pin 口能否正常输出到高电平
+        检测所有 pin 口是否都在对应的模式
         """
-        for pins in (
+        for pin in (
             ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
         ):
-            for pin in pins:
-                logger.warning("Detecting pin_%s" % pin)
-                GPIO.output(pin, GPIO.HIGH)
-                GPIO.output(pin, GPIO.LOW)
-                GPIO.remove_event_detect(pin)
+            logger.warning("Detecting pin_%s" % pin)
+            mode = self.get_pin_function_name(pin=pin)
+            if mode != self.pin_init_result[pin]:
+                logger.error("Pins detecting found error, %s init failed !!!" % pin)
 
-        not_pass_pins = [
-            pin
-            for pin in self.pin_detect_result.keys()
-            if not self.pin_detect_result[pin]
-        ]
-        if len(not_pass_pins) > 0:
-            logger.error(
-                "Pins detecting found error, %s init failed !!!" % not_pass_pins
-            )
-        else:
-            logger.info("All pins detect pass, init succeed !!!")
+        logger.info("All pins detect finished :)")
 
     def rising_callback(self, pin):
+        """
+        引脚输入态，RISING 信号回调
+        """
         if not self.init_detect_finish:
             logger.info("Pin_%s is rising, detect succeed" % pin)
             self.pin_detect_result[pin] = True
+
+    def get_pin_function_name(self, pin):
+        """
+        获取引脚的模式
+        """
+        functions = {
+            GPIO.IN: "Input",
+            GPIO.OUT: "Output",
+            GPIO.I2C: "I2C",
+            GPIO.SPI: "SPI",
+            GPIO.HARD_PWM: "HARD_PWM",
+            GPIO.SERIAL: "Serial",
+            GPIO.UNKNOWN: "Unknown",
+        }
+        logger.info("Pin_%s is %s mode" % (pin, functions[GPIO.gpio_function(pin)]))
+        return GPIO.gpio_function(pin)
 
     def reset_screen(self):
         """
