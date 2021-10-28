@@ -87,15 +87,14 @@ class RotateController:
         初始化引脚电平状态
         """
         GPIO.setmode(GPIO.BCM)
-        for pins in (
+        for pin in (
             ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
         ):
-            for pin in pins:
-                logger.info("Setup pin_%s" % pin)
-                GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
-                GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
-                # 初始化 pin 检测结果
-                self.pin_detect_result[pin] = False
+            logger.info("Setup pin_%s" % pin)
+            GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
+            # 初始化 pin 检测结果
+            self.pin_detect_result[pin] = False
 
     def detect_all_pins(self):
         """
