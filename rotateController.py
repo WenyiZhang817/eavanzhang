@@ -1,6 +1,7 @@
 import pygame
 import time
 import logging
+from PCA9685 import PCA9685
 
 log_format = "%(levelname)s | %(asctime)-15s | %(message)s"
 logging.basicConfig(format=log_format, level=logging.DEBUG)
@@ -12,6 +13,16 @@ logger = logging.getLogger(name="GPIO")
 """
 todo: 需要根据实际情况设置
 """
+# 舵机参数
+SERVO_CHANNEL = 0
+SERVO_PWM_FREQ = 50
+SERVO_START_ANGLE = 0
+SERVO_FINAL_ANGLE = 18
+SERVO_MINITRIM_RESOLUTION = 0.1  # 微调精度
+SERVO_FINAL_RESOLUTION = 0.5  # 最后上升精度
+SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
+
+
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
 INTERVAL = 10 / 1000  # 电机脉冲间隔 10 ms
 ROTATE_CYCLE_LR_UD = 100  # 位移台，移动单位距离需要的脉冲循环次数
@@ -82,6 +93,7 @@ class RotateController:
         self.pin_init_result = {}
         self.init_pins()
         self.detect_all_pins()
+        self.init_servo()
 
     def init_pins(self):
         """
@@ -94,7 +106,6 @@ class RotateController:
         ):
             logger.info("Setup pin_%s" % pin)
             GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
-            # GPIO.add_event_detect(pin, GPIO.RISING, callback=self.rising_callback)
             # 初始化 pin 检测结果
             self.pin_init_result[pin] = GPIO.OUT
 
@@ -105,20 +116,12 @@ class RotateController:
         for pin in (
             ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
         ):
-            logger.warning("Detecting pin_%s" % pin)
+            logger.info("Detecting pin_%s" % pin)
             mode = self.get_pin_function_name(pin=pin)
             if mode != self.pin_init_result[pin]:
                 logger.error("Pins detecting found error, %s init failed !!!" % pin)
 
         logger.info("All pins detect finished :)")
-
-    def rising_callback(self, pin):
-        """
-        引脚输入态，RISING 信号回调
-        """
-        if not self.init_detect_finish:
-            logger.info("Pin_%s is rising, detect succeed" % pin)
-            self.pin_detect_result[pin] = True
 
     def get_pin_function_name(self, pin):
         """
@@ -135,6 +138,51 @@ class RotateController:
         }
         logger.info("Pin_%s is %s mode" % (pin, functions[GPIO.gpio_function(pin)]))
         return GPIO.gpio_function(pin)
+
+    def init_servo(self):
+        """
+        初始化舵机
+        """
+        logger.info("Setup Servo")
+        self.servo = PCA9685()
+        self.servo.setPWMFreq(SERVO_PWM_FREQ)
+        self.servo.setRotationAngle(SERVO_CHANNEL, SERVO_START_ANGLE)
+        self.servo_current_angle = 0
+        logger.info("Setup Servo Finish")
+
+    def servo_rotate(
+        self,
+        direction,
+        resolution,
+        start_angle=None,
+        end_angle=None,
+        record_angle=False,
+    ):
+        """
+        舵机调整
+        Args:
+            direction (int): 方向，取值 1 或 -1
+            resolution (int or float): 精度
+            start_angle (int or float, optional): 起始角度. Defaults to None.
+            end_angle (int or float, optional): 结束角度. Defaults to None.
+            record_angle (bool, optional): 是否记录角度. Defaults to False.
+        """
+        if start_angle and end_angle:
+            start = start_angle * int(1 / resolution)
+            end = end_angle * int(1 / resolution)
+            direction = 1 if end > start else -1
+        else:
+            start = self.servo_current_angle * int(1 / resolution)
+            end = (self.servo_current_angle + direction * resolution) * int(
+                1 / resolution
+            )
+        for i in range(start, end, direction):
+            self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
+            if record_angle:
+                self.servo_current_angle = i / int(1 / resolution)
+            # todo, 暂时固定这个间隔，修改这里控制微调快慢
+            time.sleep(0.05)
+        return
 
     def reset_screen(self):
         """
@@ -399,13 +447,40 @@ if __name__ == "__main__":
                     pygame.K_DOWN,
                     pygame.K_d,
                     pygame.K_s,
-                ]:
+                ]:  # 位移台步进电机
                     rotate_controller.rotate(event.key)
                     rotate_controller.move_point(event.key)
-                elif event.key == pygame.K_v:
+                elif event.key == pygame.K_v:  # 液滴发射控制
                     rotate_controller.shoot_pulse()
-                elif event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_n:  # 舵机微调，角度减小
+                    rotate_controller.servo_rotate(
+                        direction=-1,
+                        resolution=SERVO_MINITRIM_RESOLUTION,
+                        record_angle=True,
+                    )
+                elif event.key == pygame.K_m:  # 舵机微调，角度增大
+                    rotate_controller.servo_rotate(
+                        direction=1,
+                        resolution=SERVO_MINITRIM_RESOLUTION,
+                        record_angle=True,
+                    )
+                elif event.key == pygame.K_b:  #  液滴到达最终位置停留一段时间再回来
+                    rotate_controller.servo_rotate(
+                        direction=1,
+                        start_angle=rotate_controller.servo_current_angle,
+                        end_angle=SERVO_FINAL_ANGLE,
+                        resolution=SERVO_FINAL_RESOLUTION,
+                    )
+                    time.sleep(SERVO_FINAL_STAY_DURATION)
+                    rotate_controller.servo_rotate(
+                        direction=-1,
+                        tart_angle=SERVO_FINAL_ANGLE,
+                        end_angle=rotate_controller.servo_current_angle,
+                        resolution=SERVO_FINAL_RESOLUTION,
+                    )
+                elif event.key == pygame.K_ESCAPE:  # 退出程序
                     pygame.quit()
                     GPIO.cleanup()
+                    rotate_controller.servo.exit_PCA9685()
                     exit(0)
         pygame.display.flip()
