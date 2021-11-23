@@ -176,7 +176,7 @@ class RotateController:
             end = (self.servo_current_angle + direction * resolution) * int(
                 1 / resolution
             )
-        for i in range(start, end, direction):
+        for i in range(int(start), int(end), direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
