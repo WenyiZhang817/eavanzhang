@@ -474,7 +474,7 @@ if __name__ == "__main__":
                     time.sleep(SERVO_FINAL_STAY_DURATION)
                     rotate_controller.servo_rotate(
                         direction=-1,
-                        tart_angle=SERVO_FINAL_ANGLE,
+                        start_angle=SERVO_FINAL_ANGLE,
                         end_angle=rotate_controller.servo_current_angle,
                         resolution=SERVO_FINAL_RESOLUTION,
                     )
