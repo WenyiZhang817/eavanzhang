@@ -167,10 +167,6 @@ class RotateController:
             end_angle (int or float, optional): 结束角度. Defaults to None.
             record_angle (bool, optional): 是否记录角度. Defaults to False.
         """
-        logger.debug(
-            "servo_rotate[direction:%s][resolution:%s][start_angle:%s][end_angle:%s][record_angle:%s]"
-            % (direction, resolution, start_angle, end_angle, record_angle)
-        )
         if start_angle and end_angle:
             start = start_angle * int(1 / resolution)
             end = end_angle * int(1 / resolution)
@@ -180,6 +176,10 @@ class RotateController:
             end = (self.servo_current_angle + direction * resolution) * int(
                 1 / resolution
             )
+        logger.debug(
+            "servo_rotate[direction:%s][resolution:%s][start:%s][end:%s][record_angle:%s]"
+            % (direction, resolution, start, end, record_angle)
+        )
         for i in range(int(start), int(end), direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
             if record_angle:
