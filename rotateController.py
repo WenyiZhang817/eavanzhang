@@ -459,12 +459,18 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_n:  # 舵机微调，角度减小
                     rotate_controller.servo_rotate(
                         direction=-1,
+                        start_angle=rotate_controller.servo_current_angle,
+                        end_angle=rotate_controller.servo_current_angle
+                        - (1 * SERVO_MINITRIM_RESOLUTION),
                         resolution=SERVO_MINITRIM_RESOLUTION,
                         record_angle=True,
                     )
                 elif event.key == pygame.K_m:  # 舵机微调，角度增大
                     rotate_controller.servo_rotate(
                         direction=1,
+                        start_angle=rotate_controller.servo_current_angle,
+                        end_angle=rotate_controller.servo_current_angle
+                        + (1 * SERVO_MINITRIM_RESOLUTION),
                         resolution=SERVO_MINITRIM_RESOLUTION,
                         record_angle=True,
                     )
