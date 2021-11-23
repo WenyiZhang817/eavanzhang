@@ -14,7 +14,7 @@ logger = logging.getLogger(name="GPIO")
 todo: 需要根据实际情况设置
 """
 # 舵机参数
-SERVO_CHANNEL = 0
+SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 0
 SERVO_FINAL_ANGLE = 18
@@ -144,7 +144,7 @@ class RotateController:
         初始化舵机
         """
         logger.info("Setup Servo")
-        self.servo = PCA9685()
+        self.servo = PCA9685(debug=True)
         self.servo.setPWMFreq(SERVO_PWM_FREQ)
         self.servo.setRotationAngle(SERVO_CHANNEL, SERVO_START_ANGLE)
         self.servo_current_angle = 0
@@ -167,6 +167,10 @@ class RotateController:
             end_angle (int or float, optional): 结束角度. Defaults to None.
             record_angle (bool, optional): 是否记录角度. Defaults to False.
         """
+        logger.debug(
+            "servo_rotate[direction:%s][resolution:%s][start_angle:%s][end_angle:%s][record_angle:%s]"
+            % (direction, resolution, start_angle, end_angle, record_angle)
+        )
         if start_angle and end_angle:
             start = start_angle * int(1 / resolution)
             end = end_angle * int(1 / resolution)
@@ -178,6 +182,8 @@ class RotateController:
             )
         for i in range(int(start), int(end), direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
+            if i / int(1 / resolution) < 80:
+                self.servo.setRotationAngle(0, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
             # todo, 暂时固定这个间隔，修改这里控制微调快慢
