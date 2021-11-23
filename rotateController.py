@@ -17,7 +17,7 @@ todo: 需要根据实际情况设置
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 0
-SERVO_FINAL_ANGLE = 18
+SERVO_FINAL_ANGLE = 180
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
@@ -147,7 +147,6 @@ class RotateController:
         self.servo = PCA9685(debug=True)
         self.servo.setPWMFreq(SERVO_PWM_FREQ)
         self.servo.setRotationAngle(SERVO_CHANNEL, SERVO_START_ANGLE)
-        self.servo.setRotationAngle(0, SERVO_START_ANGLE)
         self.servo_current_angle = 0
         logger.info("Setup Servo Finish")
 
@@ -183,8 +182,6 @@ class RotateController:
             )
         for i in range(int(start), int(end), direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
-            if i < 80:
-                self.servo.setRotationAngle(0, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
             # todo, 暂时固定这个间隔，修改这里控制微调快慢
