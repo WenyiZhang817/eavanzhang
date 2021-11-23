@@ -17,7 +17,7 @@ todo: 需要根据实际情况设置
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 0
-SERVO_FINAL_ANGLE = 180
+SERVO_FINAL_ANGLE = 18
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
@@ -180,7 +180,7 @@ class RotateController:
             "servo_rotate[direction:%s][resolution:%s][start:%s][end:%s][record_angle:%s]"
             % (direction, resolution, start, end, record_angle)
         )
-        for i in range(int(start), int(end), direction):
+        for i in range(int(start), int(end) + 1, direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
