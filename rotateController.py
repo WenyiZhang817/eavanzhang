@@ -18,8 +18,9 @@ SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 0
 SERVO_FINAL_ANGLE = 18
-SERVO_MINITRIM_RESOLUTION = 1  # 微调精度
-SERVO_FINAL_RESOLUTION = 1  # 最后上升精度
+SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
+SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
+SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
 
 
@@ -180,12 +181,12 @@ class RotateController:
             "servo_rotate[direction:%s][resolution:%s][start:%s][end:%s][record_angle:%s]"
             % (direction, resolution, start, end, record_angle)
         )
-        for i in range(int(start), int(end) + 1, direction):
+        for i in range(int(start), int(end) + direction, direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
-            # todo, 暂时固定这个间隔，修改这里控制微调快慢
-            time.sleep(0.05)
+            # 这里控制微调快慢
+            time.sleep(SERVO_GAP_DURATION)
         return
 
     def reset_screen(self):
