@@ -32,6 +32,7 @@ UNIT = 0.1  # 坐标系单位长度
 UNIT_SUFFIX = "mm"  # 坐标系长度单位
 
 # 引脚定义：A、B、C、D
+GPIO_MODE = GPIO.
 ROTATE_PINS_LR = [17, 22, 13, 12]  # 左右方向键控制
 ROTATE_PINS_UD = [18, 19, 20, 21]  # 上下方向键控制
 ROTATE_PINS_TF = [6, 5, 4, 23]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
@@ -91,9 +92,7 @@ class RotateController:
             self.screen, WIHTE_COLOR, (int(self.width / 2), int(self.height / 2)), 3
         )
         self.point = (0, 0)
-        self.pin_init_result = {}
         self.init_pins()
-        self.detect_all_pins()
         self.init_servo()
 
     def init_pins(self):
@@ -108,21 +107,23 @@ class RotateController:
             logger.info("Setup pin_%s" % pin)
             GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
             # 初始化 pin 检测结果
-            self.pin_init_result[pin] = GPIO.OUT
+            self.detect_pin(pin=pin, mode=GPIO.OUT)
 
-    def detect_all_pins(self):
+    def detect_pin(self, pin, mode):
         """
-        检测所有 pin 口是否都在对应的模式
+        检测 pin 能否正常输出
         """
-        for pin in (
-            ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
-        ):
-            logger.info("Detecting pin_%s" % pin)
-            mode = self.get_pin_function_name(pin=pin)
-            if mode != self.pin_init_result[pin]:
-                logger.error("Pins detecting found error, %s init failed !!!" % pin)
+        logger.info("Detecting pin_%s" % pin)
+        func = self.get_pin_function_name(pin=pin)
+        if mode != func:
+            raise("Pin[%s] mode is wrong, init failed !!!" % pin)
+        if mode == GPIO.OUT:
+            GPIO.output(pin, GPIO.HIGH)
+            assert GPIO.input(pin) == GPIO.HIGH, "❌ Pin[%s] value check failed, can not set  GPIO.HIGH !!!" % pin
+            GPIO.output(pin, GPIO.LOW)
+            assert GPIO.input(pin) == GPIO.LOW, "❌ Pin[%s] value check failed !!!, can not set  GPIO.LOW " % pin
 
-        logger.info("All pins detect finished :)")
+        logger.info("✅ Pin[%s] is fine :)" % pin)
 
     def get_pin_function_name(self, pin):
         """
@@ -153,30 +154,22 @@ class RotateController:
 
     def servo_rotate(
         self,
-        direction,
         resolution,
-        start_angle=None,
-        end_angle=None,
+        start_angle,
+        end_angle,
         record_angle=False,
     ):
         """
         舵机调整
         Args:
-            direction (int): 方向，取值 1 或 -1
             resolution (int or float): 精度
             start_angle (int or float, optional): 起始角度. Defaults to None.
             end_angle (int or float, optional): 结束角度. Defaults to None.
             record_angle (bool, optional): 是否记录角度. Defaults to False.
         """
-        if start_angle and end_angle:
-            start = start_angle * int(1 / resolution)
-            end = end_angle * int(1 / resolution)
-            direction = 1 if end > start else -1
-        else:
-            start = self.servo_current_angle * int(1 / resolution)
-            end = (self.servo_current_angle + direction * resolution) * int(
-                1 / resolution
-            )
+        start = start_angle * int(1 / resolution)
+        end = end_angle * int(1 / resolution)
+        direction = 1 if end > start else -1
         logger.debug(
             "servo_rotate[direction:%s][resolution:%s][start:%s][end:%s][record_angle:%s]"
             % (direction, resolution, start, end, record_angle)
