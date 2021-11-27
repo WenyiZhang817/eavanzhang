@@ -114,12 +114,16 @@ class RotateController:
         logger.info("Detecting pin_%s" % pin)
         func = self.get_pin_function_name(pin=pin)
         if mode != func:
-            raise("Pin[%s] mode is wrong, init failed !!!" % pin)
+            raise ("Pin[%s] mode is wrong, init failed !!!" % pin)
         if mode == GPIO.OUT:
             GPIO.output(pin, GPIO.HIGH)
-            assert GPIO.input(pin) == GPIO.HIGH, "❌ Pin[%s] value check failed, can not set  GPIO.HIGH !!!" % pin
+            assert GPIO.input(pin) == GPIO.HIGH, (
+                "❌ Pin[%s] value check failed, can not set  GPIO.HIGH !!!" % pin
+            )
             GPIO.output(pin, GPIO.LOW)
-            assert GPIO.input(pin) == GPIO.LOW, "❌ Pin[%s] value check failed !!!, can not set  GPIO.LOW " % pin
+            assert GPIO.input(pin) == GPIO.LOW, (
+                "❌ Pin[%s] value check failed !!!, can not set  GPIO.LOW " % pin
+            )
 
         logger.info("✅ Pin[%s] is fine :)" % pin)
 
@@ -450,7 +454,6 @@ if __name__ == "__main__":
                     rotate_controller.shoot_pulse()
                 elif event.key == pygame.K_n:  # 舵机微调，角度减小
                     rotate_controller.servo_rotate(
-                        direction=-1,
                         start_angle=rotate_controller.servo_current_angle,
                         end_angle=rotate_controller.servo_current_angle
                         - (1 * SERVO_MINITRIM_RESOLUTION),
@@ -459,7 +462,6 @@ if __name__ == "__main__":
                     )
                 elif event.key == pygame.K_m:  # 舵机微调，角度增大
                     rotate_controller.servo_rotate(
-                        direction=1,
                         start_angle=rotate_controller.servo_current_angle,
                         end_angle=rotate_controller.servo_current_angle
                         + (1 * SERVO_MINITRIM_RESOLUTION),
