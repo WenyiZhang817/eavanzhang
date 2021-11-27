@@ -17,25 +17,24 @@ todo: 需要根据实际情况设置
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 0
-SERVO_FINAL_ANGLE = 18
+SERVO_FINAL_ANGLE = 33
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
 
-
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
 INTERVAL = 10 / 1000  # 电机脉冲间隔 10 ms
-ROTATE_CYCLE_LR_UD = 100  # 位移台，移动单位距离需要的脉冲循环次数
+ROTATE_CYCLE_LR_UD = 10000  # 位移台，移动单位距离需要的脉冲循环次数,10000-1.2mm
 ROTATE_CYCLE_TF = 10  # 变压器，移动单位距离需要的脉冲循环次数
 UNIT = 0.1  # 坐标系单位长度
 UNIT_SUFFIX = "mm"  # 坐标系长度单位
 
 # 引脚定义：A、B、C、D
-ROTATE_PINS_LR = [17, 22, 13, 12]  # 左右方向键控制
-ROTATE_PINS_UD = [18, 19, 20, 21]  # 上下方向键控制
-ROTATE_PINS_TF = [6, 5, 4, 23]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
-REACTION_GENERATOR_PINS = [27]  # 发生器脉冲控制
+ROTATE_PINS_LR = [6, 13, 19, 26]  # 左右方向键控制
+ROTATE_PINS_UD = [12, 16, 20, 21]  # 上下方向键控制
+ROTATE_PINS_TF = [4, 17, 21, 22]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
+REACTION_GENERATOR_PINS = [5]  # 发生器脉冲控制
 
 """
 顺时针转动矩阵（八拍）
