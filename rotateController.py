@@ -21,6 +21,7 @@ SERVO_FINAL_ANGLE = 33
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
+SERVO_RESET_GAP_DURATION = 0.5 # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
 
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
@@ -159,6 +160,7 @@ class RotateController:
         resolution,
         start_angle,
         end_angle,
+        gap_duration,
         record_angle=False,
     ):
         """
@@ -167,6 +169,7 @@ class RotateController:
             resolution (int or float): 精度
             start_angle (int or float, optional): 起始角度. Defaults to None.
             end_angle (int or float, optional): 结束角度. Defaults to None.
+            gap_duration (int): 控制角度变化间隔.
             record_angle (bool, optional): 是否记录角度. Defaults to False.
         """
         start = start_angle * int(1 / resolution)
@@ -180,8 +183,8 @@ class RotateController:
             self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
             if record_angle:
                 self.servo_current_angle = i / int(1 / resolution)
-            # 这里控制微调快慢
-            time.sleep(SERVO_GAP_DURATION)
+            # 这里控制角度变化间隔
+            time.sleep(gap_duration)
         return
 
     def reset_screen(self):
@@ -459,6 +462,7 @@ if __name__ == "__main__":
                         - (1 * SERVO_MINITRIM_RESOLUTION),
                         resolution=SERVO_MINITRIM_RESOLUTION,
                         record_angle=True,
+                        gap_duration=SERVO_GAP_DURATION,
                     )
                 elif event.key == pygame.K_m:  # 舵机微调，角度增大
                     rotate_controller.servo_rotate(
@@ -467,6 +471,7 @@ if __name__ == "__main__":
                         + (1 * SERVO_MINITRIM_RESOLUTION),
                         resolution=SERVO_MINITRIM_RESOLUTION,
                         record_angle=True,
+                        gap_duration=SERVO_GAP_DURATION,
                     )
                 elif event.key == pygame.K_b:  #  液滴到达最终位置停留一段时间再回来
                     rotate_controller.servo_rotate(
@@ -474,6 +479,7 @@ if __name__ == "__main__":
                         end_angle=rotate_controller.servo_current_angle
                         + SERVO_FINAL_ANGLE,
                         resolution=SERVO_FINAL_RESOLUTION,
+                        gap_duration=SERVO_GAP_DURATION,
                     )
                     time.sleep(SERVO_FINAL_STAY_DURATION)
                     rotate_controller.servo_rotate(
@@ -481,6 +487,7 @@ if __name__ == "__main__":
                         + SERVO_FINAL_ANGLE,
                         end_angle=rotate_controller.servo_current_angle,
                         resolution=SERVO_FINAL_RESOLUTION,
+                        gap_duration=SERVO_RESET_GAP_DURATION,
                     )
                 elif event.key == pygame.K_ESCAPE:  # 退出程序
                     pygame.quit()
