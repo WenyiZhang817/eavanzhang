@@ -471,12 +471,14 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_b:  #  液滴到达最终位置停留一段时间再回来
                     rotate_controller.servo_rotate(
                         start_angle=rotate_controller.servo_current_angle,
-                        end_angle=SERVO_FINAL_ANGLE,
+                        end_angle=rotate_controller.servo_current_angle
+                        + SERVO_FINAL_ANGLE,
                         resolution=SERVO_FINAL_RESOLUTION,
                     )
                     time.sleep(SERVO_FINAL_STAY_DURATION)
                     rotate_controller.servo_rotate(
-                        start_angle=SERVO_FINAL_ANGLE,
+                        start_angle=rotate_controller.servo_current_angle
+                        + SERVO_FINAL_ANGLE,
                         end_angle=rotate_controller.servo_current_angle,
                         resolution=SERVO_FINAL_RESOLUTION,
                     )
