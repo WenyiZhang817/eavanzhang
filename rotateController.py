@@ -16,12 +16,12 @@ todo: 需要根据实际情况设置
 # 舵机参数
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
-SERVO_START_ANGLE = 1
-SERVO_FINAL_ANGLE = 20
+SERVO_START_ANGLE = 34
+SERVO_FINAL_ANGLE = 53
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
-SERVO_RESET_GAP_DURATION = 0.5  # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
+SERVO_RESET_GAP_DURATION = 0.1  # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
 
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
@@ -152,7 +152,7 @@ class RotateController:
         self.servo = PCA9685(debug=True)
         self.servo.setPWMFreq(SERVO_PWM_FREQ)
         self.servo.setRotationAngle(SERVO_CHANNEL, SERVO_START_ANGLE)
-        self.servo_current_angle = 0
+        self.servo_current_angle = SERVO_START_ANGLE
         logger.info("Setup Servo Finish")
 
     def servo_rotate(
@@ -179,7 +179,7 @@ class RotateController:
         )
         for i in range(int(start_angle), int(end_angle) + direction, direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i)
-            if record_angle and end_angle >= 0:
+            if record_angle and end_angle >= 1:
                 self.servo_current_angle = i
             # 这里控制角度变化间隔
             time.sleep(gap_duration)
@@ -474,15 +474,13 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_b:  #  液滴到达最终位置停留一段时间再回来
                     rotate_controller.servo_rotate(
                         start_angle=rotate_controller.servo_current_angle,
-                        end_angle=rotate_controller.servo_current_angle
-                        + SERVO_FINAL_ANGLE,
+                        end_angle=SERVO_FINAL_ANGLE,
                         resolution=SERVO_FINAL_RESOLUTION,
                         gap_duration=SERVO_GAP_DURATION,
                     )
                     time.sleep(SERVO_FINAL_STAY_DURATION)
                     rotate_controller.servo_rotate(
-                        start_angle=rotate_controller.servo_current_angle
-                        + SERVO_FINAL_ANGLE,
+                        start_angle=SERVO_FINAL_ANGLE,
                         end_angle=rotate_controller.servo_current_angle,
                         resolution=SERVO_FINAL_RESOLUTION,
                         gap_duration=SERVO_RESET_GAP_DURATION,
