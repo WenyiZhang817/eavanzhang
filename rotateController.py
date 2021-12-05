@@ -16,8 +16,8 @@ todo: 需要根据实际情况设置
 # 舵机参数
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
-SERVO_START_ANGLE = 0
-SERVO_FINAL_ANGLE = 33
+SERVO_START_ANGLE = 1
+SERVO_FINAL_ANGLE = 20
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
@@ -179,7 +179,7 @@ class RotateController:
         )
         for i in range(int(start_angle), int(end_angle) + direction, direction):
             self.servo.setRotationAngle(SERVO_CHANNEL, i)
-            if record_angle:
+            if record_angle and end_angle >= 0:
                 self.servo_current_angle = i
             # 这里控制角度变化间隔
             time.sleep(gap_duration)
