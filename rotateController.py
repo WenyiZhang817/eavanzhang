@@ -149,7 +149,7 @@ class RotateController:
         初始化舵机
         """
         logger.info("Setup Servo")
-        self.servo = PCA9685(debug=True)
+        self.servo = PCA9685()
         self.servo.setPWMFreq(SERVO_PWM_FREQ)
         self.servo.setRotationAngle(SERVO_CHANNEL, SERVO_START_ANGLE)
         self.servo_current_angle = SERVO_START_ANGLE
