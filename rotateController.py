@@ -21,12 +21,12 @@ SERVO_FINAL_ANGLE = 33
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
-SERVO_RESET_GAP_DURATION = 0.5 # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
+SERVO_RESET_GAP_DURATION = 0.5  # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
 SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
 
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
 INTERVAL = 10 / 1000  # 电机脉冲间隔 10 ms
-ROTATE_CYCLE_LR_UD = 10000  # 位移台，移动单位距离需要的脉冲循环次数,10000-1.2mm
+ROTATE_CYCLE_LR_UD = 100  # 位移台，移动单位距离需要的脉冲循环次数,10000-1.2mm
 ROTATE_CYCLE_TF = 10  # 变压器，移动单位距离需要的脉冲循环次数
 UNIT = 0.1  # 坐标系单位长度
 UNIT_SUFFIX = "mm"  # 坐标系长度单位
@@ -172,17 +172,15 @@ class RotateController:
             gap_duration (int): 控制角度变化间隔.
             record_angle (bool, optional): 是否记录角度. Defaults to False.
         """
-        start = start_angle * int(1 / resolution)
-        end = end_angle * int(1 / resolution)
-        direction = 1 if end > start else -1
+        direction = 1 if end_angle > start_angle else -1
         logger.debug(
             "servo_rotate[direction:%s][resolution:%s][start:%s][end:%s][record_angle:%s]"
-            % (direction, resolution, start, end, record_angle)
+            % (direction, resolution, start_angle, end_angle, record_angle)
         )
-        for i in range(int(start), int(end) + direction, direction):
-            self.servo.setRotationAngle(SERVO_CHANNEL, i / int(1 / resolution))
+        for i in range(int(start_angle), int(end_angle) + direction, direction):
+            self.servo.setRotationAngle(SERVO_CHANNEL, i)
             if record_angle:
-                self.servo_current_angle = i / int(1 / resolution)
+                self.servo_current_angle = i
             # 这里控制角度变化间隔
             time.sleep(gap_duration)
         return
