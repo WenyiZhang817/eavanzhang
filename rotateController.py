@@ -17,12 +17,12 @@ todo: 需要根据实际情况设置
 SERVO_CHANNEL = 1
 SERVO_PWM_FREQ = 50
 SERVO_START_ANGLE = 34
-SERVO_FINAL_ANGLE = 53
+SERVO_FINAL_ANGLE = 57
 SERVO_MINITRIM_RESOLUTION = 1  # 微调精度，最大值 1
 SERVO_FINAL_RESOLUTION = 1  # 最后上升精度，最大值 1
 SERVO_GAP_DURATION = 0  # 舵机调整间隔，单位秒，最小值 0
-SERVO_RESET_GAP_DURATION = 0.1  # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
-SERVO_FINAL_STAY_DURATION = 5  # 液滴停留时长，单位秒
+SERVO_RESET_GAP_DURATION = 0.5  # 舵机最后下降复位时的调整间隔，单位秒，最小值 0
+SERVO_FINAL_STAY_DURATION = 20  # 液滴停留时长，单位秒
 
 SHOOT_INTERVAL = 10 / 1000  # 发射脉冲宽度 10 ms
 INTERVAL = 10 / 1000  # 电机脉冲间隔 10 ms
