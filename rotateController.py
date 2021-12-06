@@ -32,10 +32,18 @@ UNIT = 0.1  # 坐标系单位长度
 UNIT_SUFFIX = "mm"  # 坐标系长度单位
 
 # 引脚定义：A、B、C、D
-ROTATE_PINS_LR = [6, 13, 19, 26]  # 左右方向键控制
-ROTATE_PINS_UD = [12, 16, 20, 21]  # 上下方向键控制
-ROTATE_PINS_TF = [4, 17, 21, 22]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
-REACTION_GENERATOR_PINS = [5]  # 发生器脉冲控制
+# ROTATE_PINS_LR =  [4, 17, 21, 22]# 左右方向键控制
+# ROTATE_PINS_UD = [12, 16, 20, 21]  # 上下方向键控制
+
+"""
+GPIO 信号
+"""
+ROTATE_PINS_TF = [6, 13, 19, 26]  # 变压器控制, d、s 键控制，放大为顺时针，缩小为逆时针
+REACTION_GENERATOR_PIN = [5]  # 发生器脉冲控制
+RELAY_PINS = [4]  # 继电器控制
+LED_PIN = [16]  # LED 控制
+FAST_CAM_PIN = [20]  # 高速摄影机控制
+THERMOSTAT_PIN = [21]  # 温控器控制
 
 """
 顺时针转动矩阵（八拍）
@@ -93,6 +101,8 @@ class RotateController:
         self.point = (0, 0)
         self.init_pins()
         self.init_servo()
+        # 0. 温控器开始工作
+        self.thermostat_control(action="start")
 
     def init_pins(self):
         """
@@ -101,7 +111,12 @@ class RotateController:
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         for pin in (
-            ROTATE_PINS_LR + ROTATE_PINS_UD + ROTATE_PINS_TF + REACTION_GENERATOR_PINS
+            ROTATE_PINS_TF
+            + REACTION_GENERATOR_PIN
+            + LED_PIN
+            + THERMOSTAT_PIN
+            + RELAY_PINS
+            + FAST_CAM_PIN
         ):
             logger.info("Setup pin_%s" % pin)
             GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
@@ -425,10 +440,45 @@ class RotateController:
         """
         脉冲发射
         """
-        for pin in REACTION_GENERATOR_PINS:
+        for pin in REACTION_GENERATOR_PIN:
             GPIO.output(pin, GPIO.HIGH)
             time.sleep(SHOOT_INTERVAL)  # the high level will last 0.01s(10ms)
             GPIO.output(pin, GPIO.LOW)
+
+    def fast_cam_start(self):
+        """
+        高速摄影机开始录制
+        """
+        for pin in FAST_CAM_PIN:
+            GPIO.output(pin, GPIO.HIGH)
+            time.sleep(0.005)  # the high level will last 0.005s(5ms)
+            GPIO.output(pin, GPIO.LOW)
+
+    def LED_control(self, action):
+        """
+        LED控制
+        """
+        if action == "start":
+            for pin in LED_PIN:
+                GPIO.output(pin, GPIO.HIGH)
+        elif action == "stop":
+            for pin in LED_PIN:
+                GPIO.output(pin, GPIO.LOW)
+        else:
+            logger.error("Unknown action: %s" % action)
+
+    def thermostat_control(self, action):
+        """
+        温控器控制
+        """
+        if action == "start":
+            for pin in THERMOSTAT_PIN:
+                GPIO.output(pin, GPIO.HIGH)
+        elif action == "stop":
+            for pin in THERMOSTAT_PIN:
+                GPIO.output(pin, GPIO.LOW)
+        else:
+            logger.error("Unknown action: %s" % action)
 
 
 if __name__ == "__main__":
@@ -472,13 +522,25 @@ if __name__ == "__main__":
                         gap_duration=SERVO_GAP_DURATION,
                     )
                 elif event.key == pygame.K_b:  #  液滴到达最终位置停留一段时间再回来
+                    # 1. 打开 LED
+                    rotate_controller.LED_control(action="start")
+                    # 2. 相机开始录制
+                    rotate_controller.fast_cam_start()
+                    # 3. 反应台上升
                     rotate_controller.servo_rotate(
                         start_angle=rotate_controller.servo_current_angle,
                         end_angle=SERVO_FINAL_ANGLE,
                         resolution=SERVO_FINAL_RESOLUTION,
                         gap_duration=SERVO_GAP_DURATION,
                     )
+                    # 4. 停留足够的反应时间
                     time.sleep(SERVO_FINAL_STAY_DURATION)
+                    # 5. 温控器停止工作
+                    rotate_controller.thermostat_control(action="stop")
+                    # 6. LED停止工作
+                    rotate_controller.LED_control(action="stop")
+                    # 7. 相机停止工作
+                    # 8. 反应台下降
                     rotate_controller.servo_rotate(
                         start_angle=SERVO_FINAL_ANGLE,
                         end_angle=rotate_controller.servo_current_angle,
